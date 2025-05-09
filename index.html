@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom YouTube Player - Language Switcher (Autoplay)</title>
-    <!-- Font Awesome for icons (optional) -->
+    <title>Custom YouTube Player </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
@@ -119,6 +118,8 @@
             list-style: none;
             margin: 0;
             padding: 5px 0;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .language-list li button {
@@ -127,137 +128,160 @@
             background: none;
             border: none;
             color: #eee;
-            padding: 8px 15px;
+            padding: 10px 15px;
             text-align: left;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
         }
 
         .language-list li button:hover {
             background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+        }
+
+        .language-list li button.active {
+            background-color: rgba(80, 80, 80, 0.9);
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-
-    <h1>Custom YouTube Player</h1>
+    <h1>YouTube Players</h1>
 
     <div class="youtube-player-container">
-        <div id="youtube-player">
-             <p id="player-loading-message">Loading Player...</p>
-        </div>
+        <div id="player-loading-message">Loading player...</div>
+        <iframe id="youtube-player"
+                src=""
+                allowfullscreen
+                allow="autoplay; encrypted-media">
+        </iframe>
 
-        <!-- Custom Settings Button Overlay -->
-        <button id="custom-settings-btn" class="custom-player-button" aria-label="Settings" title="Settings">
-            <i class="fas fa-cog"></i>
+        <button id="custom-settings-btn" class="custom-player-button" title="Audio Tracks & Captions">
+            <i class="fas fa-cog"></i> Audio
         </button>
 
-        <!-- Custom Settings Panel (initially hidden) -->
         <div id="custom-settings-panel" class="custom-player-panel">
             <div class="panel-header">
-                <span>Language / Video</span>
-                <button id="close-settings-btn" class="close-button" aria-label="Close settings">×</button>
+                <span>Audio Track</span>
+                <button id="close-settings-btn" class="close-button" title="Close">×</button>
             </div>
             <ul class="language-list">
-                <li><button data-lang="en">English</button></li>
-                <li><button data-lang="es">Español (Spanish)</button></li>
-                <li><button data-lang="fr">Français (French)</button></li>
+                <li><button data-lang="en">English (Default)</button></li>
                 <li><button data-lang="ru">Русский (Russian)</button></li>
-                <li><button data-lang="">Default (Off)</button></li>
+                <li><button data-lang="fr">Français (French)</button></li>
+                <li><button data-lang="pa">ਪੰਜਾਬੀ (Punjabi)</button></li>
+                <li><button data-lang="pt">Português (Portuguese)</button></li>
+                <li><button data-lang="es">Español (Spanish)</button></li>
+                <li><button data-lang="ja">日本語 (Japanese)</button></li>
             </ul>
         </div>
     </div>
 
-    <!-- 1. Load YouTube API Asynchronously -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-
-    <!-- 2. Your Custom JavaScript with Autoplay Logic -->
     <script>
-        let player; // Variable to hold the YouTube player instance
-        let shouldAutoplayNextVideo = false; // <<< FLAG: Track if the next load should autoplay
+        let player;
+        let initialVideoId = 'M7lc1UVf-VE'; // IMPORTANT: Your Default English Video ID
+        let shouldAutoplayNextVideo = true; // Autoplay subsequent videos by default
 
-        // --- Configuration: Define your Video IDs here ---
-        // Make sure these are valid video IDs that allow embedding
-        const initialVideoId = 'M7lc1UVf-VE'; // <<< Your DEFAULT video ID
-
+        // IMPORTANT: Update this map with your actual video IDs
         const languageVideoMap = {
-            // Ensure these are valid video IDs allowed for embedding.
-            'en': 'ZIws50TfCTc', // <<< Video ID for English
-            'es': 'EitDo0kbwTg', // <<< Video ID for Spanish
-            'fr': 'kZL5wzcZiVk', // <<< Video ID for French
-            'ru': 'NqTNmUeVo54'  // <<< Video ID for Russian
+            "en": "SVIpEdgH0PQ",  // English (Default)
+            "ru": "haiftWsn5KY",  // Russian
+            "fr": "1ytsF4dedyU",  // French
+            "pa": "RoV6WAq9-rE",  // Punjabi
+            "pt": "zUVLlQlnI1c",  // Portuguese
+            "es": "Z8aBOAMAFew",  // Spanish (Example, replace)
+            "ja": "Ybg90bQf3Xw",  // Japanese
         };
-        // --- End Configuration ---
 
-
-        // This function MUST be defined in the global scope BEFORE the API loads
         function onYouTubeIframeAPIReady() {
-          console.log("YouTube API Ready - Attempting to create player...");
-          const playerElement = document.getElementById('youtube-player');
-          if (!playerElement) {
-              console.error("Fatal Error: Player container div (#youtube-player) not found in HTML.");
-              return;
-          }
-           const loadingMessage = document.getElementById('player-loading-message');
-           if (loadingMessage) {
-               loadingMessage.remove();
-           }
-          try {
-              player = new YT.Player('youtube-player', {
-                height: '100%', width: '100%', videoId: initialVideoId,
+            console.log("YouTube Iframe API Ready.");
+            const loadingMessage = document.getElementById('player-loading-message');
+            player = new YT.Player('youtube-player', {
+                height: '100%',
+                width: '100%',
+                videoId: initialVideoId,
                 playerVars: {
-                  'playsinline': 1, 'enablejsapi': 1, 'origin': window.location.origin,
-                  // 'autoplay': 0, // Explicitly setting initial autoplay to 0 might be clearer
-                  // 'mute': 0      // Ensure initial video is not muted unless desired
+                    'playsinline': 1,
+                    'autoplay': 1,             // Autoplay initial video
+                    'controls': 1,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'cc_load_policy': 1,       // Default captions to ON
+                    'cc_lang_pref': 'en'       // Prefer English captions initially
                 },
-                events: { 'onReady': onPlayerReady, 'onStateChange': onPlayerStateChange, 'onError': onPlayerError }
-              });
-              console.log("YT.Player object created (or creation initiated).");
-          } catch (error) {
-              console.error("Error creating YT.Player:", error);
-              playerElement.innerHTML = '<p style="color: red; padding: 20px;">Error loading YouTube Player. Check console.</p>';
-          }
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+            if (loadingMessage) loadingMessage.style.display = 'none';
         }
 
         function onPlayerReady(event) {
-          console.log("Player Ready (onReady event fired)");
-          setupCustomControls();
-          // If you wanted the *initial* video to autoplay (subject to policies):
-          // event.target.playVideo();
-          // Or muted autoplay for higher chance of success:
-          // event.target.mute();
-          // event.target.playVideo();
+            console.log("Player Ready. Video ID:", player.getVideoData().video_id);
+            // Autoplay is set in playerVars, but ensure play if browser policies allow
+            // event.target.playVideo(); // This might be redundant due to autoplay:1 but can be a fallback
+            
+            // Attempt to set English captions for the initially loaded video
+            setCaptionsForLanguage('en');
+            updateActiveLanguageButton("en");
+            setupCustomControls();
         }
 
-        // Called when the player's state changes (playing, paused, etc.)
         function onPlayerStateChange(event) {
-          console.log("Player State Changed: ", event.data, " - Autoplay flag:", shouldAutoplayNextVideo);
-          // YT.PlayerState constants: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
-
-          // --- AUTOPLAY LOGIC ---
-          // Check if we intended to autoplay AND the video is now cued (ready)
-          if (shouldAutoplayNextVideo && event.data === YT.PlayerState.CUED) {
-              console.log("State is CUED and shouldAutoplay is true. Calling playVideo().");
-              // Optional: Mute before playing for higher chance of autoplay success
-              // player.mute();
-              player.playVideo();
-              shouldAutoplayNextVideo = false; // Reset the flag
-          }
-          // Optional: Handle UNSTARTED state (-1) as well, sometimes needed
-          else if (shouldAutoplayNextVideo && event.data === YT.PlayerState.UNSTARTED) {
-               console.log("State is UNSTARTED and shouldAutoplay is true. Calling playVideo().");
-               // Optional: Mute before playing
-               // player.mute();
-               player.playVideo();
-               shouldAutoplayNextVideo = false; // Reset the flag
-          }
+            console.log("Player State Change:", event.data);
+            if (event.data === YT.PlayerState.CUED && shouldAutoplayNextVideo) {
+                console.log("Video cued and shouldAutoplayNextVideo is true. Playing video.");
+                event.target.playVideo();
+                // shouldAutoplayNextVideo = false; // Keep true if all subsequent loads should also autoplay
+            } else if (event.data === YT.PlayerState.PLAYING) {
+                console.log("Player is PLAYING.");
+                const currentVideoId = player.getVideoData().video_id;
+                let activeLang = "en"; // Default to English
+                for (const lang in languageVideoMap) {
+                    if (languageVideoMap[lang] === currentVideoId) {
+                        activeLang = lang;
+                        break;
+                    }
+                }
+                updateActiveLanguageButton(activeLang);
+                // When a video starts playing (either initial or subsequent), ensure captions for its language are set.
+                // setCaptionsForLanguage(activeLang); // This might be too aggressive or re-apply unnecessarily.
+                                                    // Caption setting is handled on load and on button click.
+            }
         }
 
         function onPlayerError(event) {
-            console.error("YouTube Player Error:", event.data);
-            // If error 150 or 101 happens, the video can't be embedded.
-            alert(`Player Error: ${event.data}. Check the video ID and embedding permissions.`);
+            console.error("Player Error:", event.data);
+            const loadingMessage = document.getElementById('player-loading-message');
+            if (loadingMessage) {
+                 loadingMessage.textContent = `Player Error: ${event.data}. Check video ID & permissions.`;
+                 loadingMessage.style.display = 'block';
+            }
+        }
+
+        function setCaptionsForLanguage(langCode) {
+            if (!player || typeof player.loadModule !== 'function' || typeof player.setOption !== 'function') {
+                console.error("Player not ready for setting captions.");
+                return;
+            }
+            if (langCode) {
+                player.loadModule('captions');
+                setTimeout(() => { // Timeout helps ensure module is ready
+                    try {
+                        player.setOption('captions', 'track', {'languageCode': langCode});
+                        console.log(`Attempting to set captions to: ${langCode}`);
+                    } catch (e) {
+                        console.error(`Error setting caption track for ${langCode}:`, e);
+                    }
+                }, 500);
+            } else {
+                // Logic to turn captions off if langCode is empty (e.g., for a "Captions Off" button)
+                // For now, all our buttons have a langCode.
+                // unloadModule might hide button, so be careful. player.setOption('captions', 'track', {}); might be better.
+                 console.log("No language code provided for captions, captions might use video default or be off.");
+            }
         }
 
         function setupCustomControls() {
@@ -267,17 +291,15 @@
           const closePanelBtn = document.getElementById('close-settings-btn');
           const langButtons = document.querySelectorAll('.language-list button');
 
-          if (!settingsBtn || !settingsPanel || !closePanelBtn || !langButtons || langButtons.length === 0) {
+          if (!settingsBtn || !settingsPanel || !closePanelBtn || !langButtons || !langButtons.length) {
              console.error("setupCustomControls: One or more control elements not found!"); return;
           }
 
           settingsBtn.addEventListener('click', () => {
-            console.log("Settings button clicked.");
             settingsPanel.classList.toggle('visible');
           });
 
           closePanelBtn.addEventListener('click', () => {
-              console.log("Close settings button clicked.");
               settingsPanel.classList.remove('visible');
           });
 
@@ -285,35 +307,35 @@
             button.addEventListener('click', () => {
               const langCode = button.getAttribute('data-lang');
               console.log("Language button clicked. Selected code:", langCode);
+
               if (!player || typeof player.loadVideoById !== 'function') {
                   console.error("Player object or loadVideoById method not available.");
                   settingsPanel.classList.remove('visible'); return;
               }
-              let videoIdToLoad = initialVideoId;
-              if (langCode && languageVideoMap.hasOwnProperty(langCode)) {
-                  videoIdToLoad = languageVideoMap[langCode];
-                  console.log(`Found specific video for '${langCode}': ${videoIdToLoad}`);
-              } else if (langCode) {
-                   console.warn(`No specific video mapped for language '${langCode}'. Loading default: ${initialVideoId}`);
-              } else {
-                   console.log(`"Default (Off)" selected. Loading default video: ${initialVideoId}`);
-              }
 
-              // --- SET AUTOPLAY FLAG ---
-              console.log("Setting shouldAutoplayNextVideo = true");
-              shouldAutoplayNextVideo = true; // Signal intent to autoplay the next video
+              let videoIdToLoad = initialVideoId; // Default to English video
+
+              if (langCode) {
+                  if (languageVideoMap.hasOwnProperty(langCode)) {
+                      const mappedVideoId = languageVideoMap[langCode];
+                      // Generic placeholder check
+                      if (mappedVideoId && typeof mappedVideoId === 'string' && !mappedVideoId.startsWith("YOUR_") && !mappedVideoId.endsWith("_ID_HERE")) {
+                          videoIdToLoad = mappedVideoId;
+                          console.log(`Found specific video for '${langCode}': ${videoIdToLoad}`);
+                      } else {
+                          console.warn(`Placeholder or invalid video ID for language '${langCode}'. Loading default English video: ${initialVideoId}`);
+                      }
+                  } else {
+                      console.warn(`Language code '${langCode}' not found in map. Loading default English video: ${initialVideoId}`);
+                  }
+              }
+              
+              shouldAutoplayNextVideo = true; // Ensure subsequent videos attempt to autoplay
 
               console.log(`Calling player.loadVideoById('${videoIdToLoad}')`);
-              player.loadVideoById(videoIdToLoad); // Load the video (autoplay handled in onStateChange)
-
-              // --- Caption handling (optional, remains the same) ---
-              if (langCode && typeof player.loadModule === 'function' && typeof player.setOption === 'function') {
-                  player.loadModule('cc'); player.setOption('cc', 'track', {'languageCode': langCode}); player.setOption('cc', 'reload', true);
-                  console.log(`Attempting to set captions to: ${langCode} for new video`);
-              } else if (!langCode && typeof player.unloadModule === 'function') {
-                  player.unloadModule('cc'); console.log("Attempting to turn captions OFF for new video");
-              }
-              // --- End Caption Handling ---
+              player.loadVideoById(videoIdToLoad); // Autoplay handled by onStateChange or autoplay playerVar
+              
+              setCaptionsForLanguage(langCode); // Set captions for the newly selected language
 
               settingsPanel.classList.remove('visible');
             });
@@ -321,12 +343,26 @@
 
           document.addEventListener('click', (event) => {
             if (settingsPanel.classList.contains('visible') && !settingsPanel.contains(event.target) && !settingsBtn.contains(event.target)) {
-                console.log("Clicked outside settings panel/button. Closing panel.");
                 settingsPanel.classList.remove('visible');
             }
           });
           console.log("Custom controls setup complete.");
-        } // End setupCustomControls
+        }
+
+        function updateActiveLanguageButton(activeLangCode) {
+            const langButtons = document.querySelectorAll('.language-list button');
+            langButtons.forEach(button => {
+                button.classList.remove('active');
+                if (button.getAttribute('data-lang') === activeLangCode) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api"; // Standard URL for YouTube API
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     </script>
 
 </body>
